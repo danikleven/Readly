@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
+
+@theme {
+  --font-special: "Special Elite", system-ui, serif;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    /* Esconde a barra no Chrome, Safari e navegadores baseados em Webkit */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    /* Esconde no Firefox, IE e Edge */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
