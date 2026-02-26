@@ -1,29 +1,25 @@
-// src/components/BookCard.jsx
+import { Link } from 'react-router-dom';
 import { getCoverUrl } from '../data/books';
 
 function BookCard({ book }) {
   return (
-    <div className="flex-shrink-0 w-40 md:w-48 flex flex-col items-center group cursor-pointer">
-      {/* Capa */}
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-blue-500/20 group-hover:shadow-2xl">
-        <img 
-          src={getCoverUrl(book.isbn)} 
-          alt={book.title}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
+    <Link 
+      to={`/book/${book.id}`} 
+      // Adicionei 'inline-block' ou 'flex' e defini uma largura fixa/mínima
+      className="bg-slate-900 p-4 rounded-xl hover:scale-105 transition-transform cursor-pointer border border-slate-800 flex flex-col items-center w-48 min-w-[192px] no-underline shadow-md"
+    >
+      <img 
+        src={getCoverUrl(book.isbn)} 
+        alt={book.title} 
+        // 'w-full' aqui faz a imagem ocupar toda a largura interna do card
+        className="w-full h-64 object-cover rounded-md shadow-lg bg-slate-800" 
+        onError={(e) => { e.target.src = 'https://via.placeholder.com/150x225?text=No+Cover'; }}
+      />
+      <div className="mt-4 text-center w-full">
+        <h3 className="font-bold text-sm truncate text-white w-full">{book.title}</h3>
+        <p className="text-slate-400 text-xs mt-1">{book.author}</p>
       </div>
-
-      {/* Textos */}
-      <div className="mt-3 text-center w-full">
-        <h3 className="font-special text-white text-sm font-bold leading-tight line-clamp-2">
-          {book.title}
-        </h3>
-        <p className="font-special text-slate-400 text-xs mt-1">
-          {book.author}
-        </p>
-      </div>
-    </div>
+    </Link>
   );
 }
 
