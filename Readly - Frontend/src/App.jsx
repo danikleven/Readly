@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, useLocation, Link } from 'react-router-dom'
 import './App.css'
 import Header from './components/Header'
@@ -9,8 +9,18 @@ import AddBook from './pages/AddBook'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [allBooks, setAllBooks] = useState(booksMock);
   const location = useLocation();
+
+  // Inicializa o estado com dados do LocalStorage ou com o Mock
+  const [allBooks, setAllBooks] = useState(() => {
+    const savedBooks = localStorage.getItem('library_books');
+    return savedBooks ? JSON.parse(savedBooks) : booksMock;
+  });
+
+  // Salva no LocalStorage sempre que a lista de livros mudar
+  useEffect(() => {
+    localStorage.setItem('library_books', JSON.stringify(allBooks));
+  }, [allBooks]);
 
   const handleAddBook = (newBook) => {
     if (allBooks.some(b => b.isbn === newBook.isbn)) {

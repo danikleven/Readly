@@ -6,25 +6,35 @@ function BookDetails({ books }) {
   const { id } = useParams();
   const book = books?.find(b => b.id === parseInt(id));
 
-  const [comments, setComments] = useState([]);
+  // Inicializa comentários do LocalStorage ou carrega os iniciais se for livro do Mock
+  const [comments, setComments] = useState(() => {
+    const saved = localStorage.getItem(`comments_${id}`);
+    if (saved) return JSON.parse(saved);
+    
+    // Default para livros do mock (IDs baixos)
+    if (book && book.id < 1700000000000) {
+      return [
+        { id: 1, name: "John Doe", text: "Incredible world building!", rating: 5, likes: 12, date: "2026-02-15" },
+        { id: 2, name: "Jane Smith", text: "A bit slow but deep.", rating: 4, likes: 5, date: "2026-02-20" }
+      ];
+    }
+    return [];
+  });
+
   const [newName, setNewName] = useState('');
   const [newComment, setNewComment] = useState('');
   const [selectedRating, setSelectedRating] = useState(0);
   const [filter, setFilter] = useState('relevant');
 
-  // Carrega comentários iniciais para livros do Mock
+  // Persiste os comentários no LocalStorage sempre que houver mudança
   useEffect(() => {
-    if (book && book.id < 1700000000000) {
-      setComments([
-        { id: 1, name: "John Doe", text: "Incredible world building!", rating: 5, likes: 12, date: "2026-02-15" },
-        { id: 2, name: "Jane Smith", text: "A bit slow but deep.", rating: 4, likes: 5, date: "2026-02-20" }
-      ]);
+    if (id) {
+      localStorage.setItem(`comments_${id}`, JSON.stringify(comments));
     }
-  }, [book]);
+  }, [comments, id]);
 
   if (!book) return <div className="text-center p-20 text-white font-special text-2xl">Book not found!</div>;
 
-  // CÁLCULO DA MÉDIA DA COMUNIDADE
   const communityAverage = comments.length > 0 
     ? (comments.reduce((acc, curr) => acc + curr.rating, 0) / comments.length).toFixed(1)
     : "0.0";
@@ -148,7 +158,6 @@ function BookDetails({ books }) {
                   <div>
                     <h4 className="text-white font-bold">{c.name}</h4>
                     <div className="text-blue-500 text-sm">
-                      {/* Lógica simplificada de estrelas para evitar erros de sintaxe */}
                       {"★".repeat(c.rating)}{"☆".repeat(5 - c.rating)}
                       <span className="text-slate-600 ml-2">({c.rating}/5)</span>
                     </div>
