@@ -1,5 +1,5 @@
 import { useState } from 'react'; 
-import { Link } from 'react-router-dom'; // Importe o Link
+import { Link } from 'react-router-dom';
 
 function Header({ onSearch }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -16,11 +16,8 @@ function Header({ onSearch }) {
 
       <nav className="flex items-center gap-6 mt-8 font-special text-sm md:text-base">
         <Link to="/" className="hover:text-blue-400 transition-colors uppercase tracking-widest text-white">Home</Link>
-        
-        {/* LINK PARA ADICIONAR LIVRO */}
-        <Link to="/add-book" className="hover:text-blue-400 transition-colors uppercase tracking-widest text-white">
-          Add Book
-        </Link>
+        <Link to="/add-book" className="hover:text-blue-400 transition-colors uppercase tracking-widest text-white">Add Book</Link>
+        <Link to="/contact" className="hover:text-blue-400 transition-colors uppercase tracking-widest text-white">Contact</Link>
         
         <button 
           onClick={() => {

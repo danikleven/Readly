@@ -6,45 +6,51 @@ import Body from './components/Body'
 import { booksMock } from './data/books'
 import BookDetails from './pages/BookDetails'
 import AddBook from './pages/AddBook'
+import Contact from './pages/Contact'
 import Footer from './components/Footer'
+import TopBar from './components/TopBar'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
+
+  // Admin simples: persiste no localStorage sem timeout complexo
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return localStorage.getItem('readly_admin_session') === 'true';
+  });
 
   const [allBooks, setAllBooks] = useState(() => {
     const savedBooks = localStorage.getItem('library_books');
     return savedBooks ? JSON.parse(savedBooks) : booksMock;
   });
 
+  // Salva status de admin
+  useEffect(() => {
+    localStorage.setItem('readly_admin_session', isAdmin);
+  }, [isAdmin]);
+
+  // Persistência dos livros
   useEffect(() => {
     localStorage.setItem('library_books', JSON.stringify(allBooks));
   }, [allBooks]);
 
   const handleAddBook = (newBook) => {
     if (allBooks.some(b => b.isbn === newBook.isbn)) {
-      alert("This ISBN already exists in your library!");
+      alert("This ISBN already exists!");
       return null;
     }
-    const updatedBooks = [newBook, ...allBooks];
-    setAllBooks(updatedBooks);
+    setAllBooks([newBook, ...allBooks]);
     return newBook;
   };
 
-  // --- NOVA FUNÇÃO DE EDITAR ---
   const handleUpdateBook = (id, updatedData) => {
-    const updatedBooks = allBooks.map(book => 
-      book.id === id ? { ...book, ...updatedData } : book
-    );
-    setAllBooks(updatedBooks);
+    setAllBooks(allBooks.map(book => book.id === id ? { ...book, ...updatedData } : book));
     return true;
   };
 
   const handleDeleteBook = (bookId) => {
-    if (window.confirm("Are you sure you want to remove this book from your library?")) {
-      const updatedBooks = allBooks.filter(book => book.id !== bookId);
-      setAllBooks(updatedBooks);
+    if (window.confirm("Are you sure you want to remove this book?")) {
+      setAllBooks(allBooks.filter(book => book.id !== bookId));
       localStorage.removeItem(`comments_${bookId}`);
       return true;
     }
@@ -61,6 +67,8 @@ function App() {
 
   return (
     <div className='min-h-screen bg-slate-950 text-white flex flex-col'>
+      <TopBar isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
+
       <div className="flex-1 w-full p-4 md:p-10 flex flex-col items-center">
         
         {location.pathname === '/' ? (
@@ -84,16 +92,17 @@ function App() {
               <BookDetails 
                 books={allBooks} 
                 onDeleteBook={handleDeleteBook} 
-                onUpdateBook={handleUpdateBook} // Passando a nova prop
+                onUpdateBook={handleUpdateBook}
                 isAdmin={isAdmin} 
               />
             } 
           />
           <Route path="/add-book" element={<AddBook onAddBook={handleAddBook} />} />
+          <Route path="/contact" element={<Contact />} />
         </Routes>
       </div>
 
-      <Footer isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
+      <Footer />
     </div>
   )
 }
