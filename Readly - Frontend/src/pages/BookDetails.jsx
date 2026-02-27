@@ -2,10 +2,15 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getCoverUrl } from '../data/books';
 
-function BookDetails({ books, onDeleteBook, isAdmin }) {
+function BookDetails({ books, onDeleteBook, onUpdateBook, isAdmin }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const book = books?.find(b => b.id === parseInt(id));
+
+  // Estados para Edição
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(book?.title || "");
+  const [editAuthor, setEditAuthor] = useState(book?.author || "");
 
   const [comments, setComments] = useState(() => {
     const saved = localStorage.getItem(`comments_${id}`);
@@ -37,12 +42,17 @@ function BookDetails({ books, onDeleteBook, isAdmin }) {
     ? (comments.reduce((acc, curr) => acc + curr.rating, 0) / comments.length).toFixed(1)
     : "0.0";
 
+  // --- FUNÇÃO PARA SALVAR EDIÇÃO ---
+  const handleSaveEdit = () => {
+    onUpdateBook(book.id, { title: editTitle, author: editAuthor });
+    setIsEditing(false);
+    alert("Book updated successfully!");
+  };
+
   const handleConfirmDelete = () => {
-    if (window.confirm("Are you sure you want to permanently remove this book from your collection?")) {
+    if (window.confirm("Are you sure you want to permanently remove this book?")) {
       const wasDeleted = onDeleteBook(book.id);
-      if (wasDeleted) {
-        navigate('/');
-      }
+      if (wasDeleted) navigate('/');
     }
   };
 
@@ -52,7 +62,6 @@ function BookDetails({ books, onDeleteBook, isAdmin }) {
       alert("Please provide your name and a rating!");
       return;
     }
-
     const newEntry = {
       id: Date.now(),
       name: newName,
@@ -61,17 +70,12 @@ function BookDetails({ books, onDeleteBook, isAdmin }) {
       likes: 0,
       date: new Date().toISOString().split('T')[0]
     };
-
     setComments([newEntry, ...comments]);
-    setNewName('');
-    setNewComment('');
-    setSelectedRating(0);
+    setNewName(''); setNewComment(''); setSelectedRating(0);
   };
 
   const handleLike = (commentId) => {
-    setComments(prevComments => 
-      prevComments.map(c => c.id === commentId ? { ...c, likes: c.likes + 1 } : c)
-    );
+    setComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: c.likes + 1 } : c));
   };
 
   const sortedComments = [...comments].sort((a, b) => {
@@ -88,13 +92,30 @@ function BookDetails({ books, onDeleteBook, isAdmin }) {
         <img src={getCoverUrl(book.isbn)} alt={book.title} className="w-64 h-96 object-cover rounded-lg shadow-2xl border border-slate-700" />
         
         <div className="flex flex-col flex-1 text-left">
-          <div className="flex justify-between items-start mb-2">
-            <h1 className="text-4xl font-bold tracking-tight">{book.title}</h1>
+          <div className="flex justify-between items-start mb-2 gap-4">
+            {isEditing ? (
+              <input 
+                className="bg-slate-800 border border-blue-500 rounded p-2 text-2xl font-bold w-full outline-none"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
+            ) : (
+              <h1 className="text-4xl font-bold tracking-tight">{book.title}</h1>
+            )}
             <div className="bg-blue-600/20 border border-blue-500 text-blue-400 px-3 py-1 rounded-lg font-bold text-sm whitespace-nowrap">
               API SCORE: {book.rating || '0.0'} ★
             </div>
           </div>
-          <p className="text-xl text-slate-400 mb-6 font-special tracking-wide underline underline-offset-8 decoration-slate-800">by {book.author}</p>
+
+          {isEditing ? (
+            <input 
+              className="bg-slate-800 border border-slate-700 rounded p-1 text-lg mb-6 w-full outline-none text-slate-400 mt-2"
+              value={editAuthor}
+              onChange={(e) => setEditAuthor(e.target.value)}
+            />
+          ) : (
+            <p className="text-xl text-slate-400 mb-6 font-special tracking-wide underline underline-offset-8 decoration-slate-800">by {book.author}</p>
+          )}
 
           <div className="bg-slate-800/30 p-6 rounded-xl mb-6 border border-slate-700/50">
             <h3 className="text-blue-500 font-bold uppercase text-[10px] tracking-widest mb-2">Book Summary</h3>
@@ -115,27 +136,49 @@ function BookDetails({ books, onDeleteBook, isAdmin }) {
               </div>
             </div>
 
-            {/* REPOSITIONED DELETE BUTTON */}
+            {/* ADMIN ACTIONS */}
             {isAdmin && (
-              <button 
-                onClick={handleConfirmDelete}
-                className="bg-red-950/30 border border-red-900/50 hover:bg-red-600 hover:text-white text-red-500 transition-all cursor-pointer p-4 rounded-xl group"
-                title="Remove from Library"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform">
-                  <path d="M3 6h18"></path>
-                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
-              </button>
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <button 
+                    onClick={handleSaveEdit}
+                    className="bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-xl transition-all cursor-pointer font-bold uppercase text-[10px] tracking-widest"
+                  >
+                    Save Changes
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="bg-slate-800 border border-slate-700 hover:border-blue-500 text-slate-400 hover:text-blue-500 transition-all cursor-pointer p-4 rounded-xl group"
+                    title="Edit Book Details"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-12 transition-transform">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                )}
+                
+                <button 
+                  onClick={handleConfirmDelete}
+                  className="bg-red-950/30 border border-red-900/50 hover:bg-red-600 hover:text-white text-red-500 transition-all cursor-pointer p-4 rounded-xl group"
+                  title="Remove from Library"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* DISCUSSION SECTION */}
+      {/* ... (resto do componente igual: Discussion Section e Back link) ... */}
       <div className="w-full max-w-4xl mx-auto flex flex-col gap-8">
         <div className="flex justify-between items-center border-b border-slate-800 pb-4">
           <h2 className="text-2xl font-bold uppercase tracking-tighter">User Discussion</h2>
@@ -145,7 +188,6 @@ function BookDetails({ books, onDeleteBook, isAdmin }) {
           </select>
         </div>
 
-        {/* REVIEW FORM */}
         <form onSubmit={handleAddComment} className="bg-slate-900 border border-slate-800 p-6 rounded-xl flex flex-col gap-5 shadow-xl">
           <div className="flex flex-col md:flex-row gap-4">
             <input 
@@ -176,7 +218,6 @@ function BookDetails({ books, onDeleteBook, isAdmin }) {
           </button>
         </form>
 
-        {/* COMMENTS LIST */}
         <div className="flex flex-col gap-6">
           {sortedComments.length > 0 ? (
             sortedComments.map(c => (

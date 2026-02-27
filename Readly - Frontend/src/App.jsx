@@ -6,20 +6,18 @@ import Body from './components/Body'
 import { booksMock } from './data/books'
 import BookDetails from './pages/BookDetails'
 import AddBook from './pages/AddBook'
-import Footer from './components/Footer' // Certifique-se de criar este arquivo
+import Footer from './components/Footer'
 
 function App() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false); // Estado de segurança
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
 
-  // Inicializa o estado com dados do LocalStorage ou com o Mock
   const [allBooks, setAllBooks] = useState(() => {
     const savedBooks = localStorage.getItem('library_books');
     return savedBooks ? JSON.parse(savedBooks) : booksMock;
   });
 
-  // Salva no LocalStorage sempre que a lista de livros mudar
   useEffect(() => {
     localStorage.setItem('library_books', JSON.stringify(allBooks));
   }, [allBooks]);
@@ -34,13 +32,19 @@ function App() {
     return newBook;
   };
 
-  // FUNÇÃO DE DELETAR
+  // --- NOVA FUNÇÃO DE EDITAR ---
+  const handleUpdateBook = (id, updatedData) => {
+    const updatedBooks = allBooks.map(book => 
+      book.id === id ? { ...book, ...updatedData } : book
+    );
+    setAllBooks(updatedBooks);
+    return true;
+  };
+
   const handleDeleteBook = (bookId) => {
     if (window.confirm("Are you sure you want to remove this book from your library?")) {
       const updatedBooks = allBooks.filter(book => book.id !== bookId);
       setAllBooks(updatedBooks);
-      
-      // Limpa os comentários associados a esse livro para não lixar o LocalStorage
       localStorage.removeItem(`comments_${bookId}`);
       return true;
     }
@@ -57,10 +61,8 @@ function App() {
 
   return (
     <div className='min-h-screen bg-slate-950 text-white flex flex-col'>
-      {/* Container principal cresce para empurrar o footer */}
       <div className="flex-1 w-full p-4 md:p-10 flex flex-col items-center">
         
-        {/* HEADER DINÂMICO */}
         {location.pathname === '/' ? (
           <Header onSearch={setSearchTerm} />
         ) : (
@@ -82,6 +84,7 @@ function App() {
               <BookDetails 
                 books={allBooks} 
                 onDeleteBook={handleDeleteBook} 
+                onUpdateBook={handleUpdateBook} // Passando a nova prop
                 isAdmin={isAdmin} 
               />
             } 
@@ -90,7 +93,6 @@ function App() {
         </Routes>
       </div>
 
-      {/* FOOTER NO FINAL */}
       <Footer isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
     </div>
   )
